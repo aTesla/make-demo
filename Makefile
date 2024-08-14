@@ -1,14 +1,15 @@
-# 使用隐式规则 Implicit Rules:
-world.out: hello.o main.o
-	cc -o world.out hello.o main.o
+# 变量 Variables
 
-# # 编译hello.c:
-# hello.o: hello.c
-# 	cc -c hello.c
+# $(wildcard *.c) 列出当前目录下的所有 .c 文件: hello.c main.c
+# 用函数 patsubst 进行模式替换得到: hello.o main.o
+OBJS = $(patsubst %.c,%.o,$(wildcard *.c))
+TARGET = world.out
 
-# # 编译main.c:
-# main.o: main.c hello.h
-# 	cc -c main.c
+$(TARGET): $(OBJS)
+	@echo '$$@ = $@' # 变量 $@ 表示target
+	@echo '$$< = $<' # 变量 $< 表示第一个依赖项
+	@echo '$$^ = $^' # 变量 $^ 表示所有依赖项
+	$(CC) -o $@ $^
 
 clean:
-	rm -f *.o world.out
+	rm -f *.o $(TARGET)
