@@ -1,36 +1,43 @@
-# 列出所有 .c 文件:
-SRCS = $(wildcard *.c)
+SRC_DIR = ./src
+BUILD_DIR = ./build
+TARGET = $(BUILD_DIR)/world.out
 
-# 根据SRCS生成 .o 文件列表:
-OBJS = $(SRCS:.c=.o)
+CC = cc
+CFLAGS = -Wall
 
-# 根据SRCS生成 .d 文件列表:
-DEPS = $(SRCS:.c=.d)
+# ./src/*.c
+SRCS = $(shell find $(SRC_DIR) -name '*.c')
+# ./src/*.c => ./build/*.o
+OBJS = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(SRCS))
+# ./src/*.c => ./build/*.d
+DEPS = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.d,$(SRCS))
 
-TARGET = world.out
+# 默认目标
+all: $(TARGET)
 
-# 默认目标:
-${TARGET}: ${OBJS}
-	$(CC) -o $@ $^
-
-# xyz.d 的规则由 xyz.c 生成:
-%.d: %.c
+# build/xyz.d 的规则由 src/xyz.c 生成:
+$(BUILD_DIR)/%.d: $(SRC_DIR)/%.c
+	@mkdir -p $(dir $@); \
 	rm -f $@; \
 	$(CC) -MM $< >$@.tmp; \
 	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.tmp > $@; \
 	rm -f $@.tmp
 
-# 模式规则
-%.o: %.c
-	$(CC) -c -o $@ $<
+# build/xyz.o 的规则由 src/xyz.c 生成:
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c -o $@ $<
 
-log:
-	@echo $(SRSC); \
-	@echo $(OBJS); \
-	@echo $(DEPS)
+# 链接:
+$(TARGET): $(OBJS)
+	@echo "building $@..."
+	@mkdir -p $(dir $@)
+	$(CC) -o $(TARGET) $(OBJS)
 
+# 清理 build 目录:
 clean:
-	rm -rf *.o *.d $(TARGET)
+	@echo "clean..."
+	rm -rf $(BUILD_DIR)
 
 # 引入所有 .d 文件:
-include $(DEPS)
+-include $(DEPS)
